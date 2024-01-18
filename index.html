@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Photo Editor</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #2c3e50;
+        }
+
+        #editor-container {
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        canvas {
+            border: 1px solid #95a5a6;
+            border-radius: 5px;
+        }
+
+        input[type="file"] {
+            margin-top: 10px;
+            display: none;
+        }
+
+        .tool-button {
+            margin-top: 10px;
+            cursor: pointer;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .tool-button:hover {
+            background-color: #2980b9;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .save-button {
+            margin-top: 10px;
+            cursor: pointer;
+            padding: 10px 20px;
+            background-color: #27ae60;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .save-button:hover {
+            background-color: #219e54;
+        }
+    </style>
+</head>
+<body>
+    <div id="editor-container">
+        <canvas id="canvas" width="800" height="600"></canvas>
+        <input type="file" id="file-input" accept="image/*">
+        <label for="file-input" class="tool-button">Select Image</label>
+
+        <button class="tool-button" onclick="applyFilter('brightness')">Brightness</button>
+        <button class="tool-button" onclick="applyFilter('contrast')">Contrast</button>
+        <button class="tool-button" onclick="applyFilter('sepia')">Sepia</button>
+        <button class="tool-button" onclick="applyFilter('vintage')">Vintage</button>
+
+        <button class="save-button" onclick="saveImage()">Save Image</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.4.0/fabric.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"></script>
+    <script>
+        const canvas = new fabric.Canvas('canvas');
+        let originalImage;
+
+        document.getElementById('file-input').addEventListener('change', function (event) {
+            const fileInput = event.target;
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                fabric.Image.fromURL(e.target.result, function (img) {
+                    originalImage = img;
+                    canvas.setWidth(img.width);
+                    canvas.setHeight(img.height);
+                    canvas.clear().add(img);
+                });
+            };
+
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function applyFilter(filter) {
+            if (!originalImage) return;
+
+            Caman(originalImage.getElement(), function () {
+                this.revert();
+                this[filter]();
+                this.render(function () {
+                    const newImgData = this.toBase64();
+                    fabric.Image.fromURL(newImgData, function (img) {
+                        canvas.clear().add(img);
+                    });
+                });
+            });
+        }
+
+        function saveImage() {
+            const dataURL = canvas.toDataURL({ format: 'png' });
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = 'edited_image.png';
+            link.click();
+        }
+    </script>
+</body>
+</html>
